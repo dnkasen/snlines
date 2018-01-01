@@ -1,5 +1,6 @@
 # snlines.py
-supernova line identification tool
+
+# supernova line identification tool
 
 #########################################################
  Code for spectral line identification
