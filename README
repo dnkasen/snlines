@@ -9,12 +9,24 @@
 
  usage: snlines.py spectrum.dat
  where spectrum.dat is a spectrum file with two
- 
  column format:
- 
-    wavelength(angstroms)   flux
+     wavelength(angstroms)   flux
+
+
+ For a given ion of interest, the code shows the relevant 
+ lines sorted by their strength, estimated in an LTE way:
+
+ tau = g*f*lambda_0*exp(-E/kT)
+
+ where:
+   lambda_0 = line center wavelength
+   f        = line oscillator strength 
+   g        = statistical weight of the lower level of the transition
+   E        = excitation energy of the lower level of the transition
 
 Line data from Kurucz cd23, stored in file kurucz.pkl
+The default temperature is T = 10^4 K 
+Change the default by running pickledata.py with a chaged Tref
 
 Press ? at the prompt for commands:
 
