@@ -1,7 +1,13 @@
-# snlines.py
-# supernova line identification tool
-
+#######################################################
+# snline.py : A code for SN line identification
+#
+# calculate_pcygni_sn_line.py: a code to calculate a
+# simple SN line profile
 #########################################################
+
+
+# snlines.py
+
  Code for spectral line identification
  Thanks to the Bloodhound Gang...
  Daniel Kasen (kasen@berkeley.edu)
