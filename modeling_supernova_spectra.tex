@@ -1,0 +1,324 @@
+\documentclass{tufte-handout}
+
+\input{header}
+
+\title{Calculating Spectra or Supernovas and other Expanding Transients: A worksheet}
+\author{D. Kasen (kasen@berkeley.edu)}
+%\author[The Tufte-LaTeX Developers]{The Tufte-\LaTeX\ Developers}
+\date{}
+%\date{due Friday, 1/27/2017, 5 PM}   % if the \date{} command is left out, the current date will be used
+
+\newcommand{\texp}{\ensuremath{t_{\rm exp}}}
+
+\newcommand{\Rph}{\ensuremath{R_{\rm ph}}}
+\newcommand{\Tph}{\ensuremath{T_{\rm ph}}}
+
+\begin{document}
+
+
+\maketitle
+
+\newcounter{subq}
+\newcounter{quest}
+\setcounter{quest}{0}
+
+
+\pp {This worksheet} guides the reader through some basic calculations helpful for understanding basic spectrum formation in supernovae. They also provide a recipe for writing a relatively simple
+code to calculate synthetic model spectra.  The methods can be helpful for analyzing observed supernova spectra and making approximate predictions of the spectral signatures of explosion models (even aspherical ones!). 
+
+This \link{https://github.com/dnkasen/snlines}{git hub repo} provides lists (kurucz\_lines\_cd23.dat) of atomic line
+transitions and their relevant parameters that can be used via the equations below to determine which lines are important in a spectrum.
+The repo also includes a useful python script, {\it snlines.py} that aids in identifying lines in observed supernova spectra and estimating expansion velocities 
+
+\newthought{We will follow the ``elementary supernova model",} which is similar to that used in the well known {\it Synow} code. We make several simplifying assumptions
+
+\pp {\bf Assumption 1:}  The continuum is produced by a sharp\footnote{We define the photosphere as the radius at which the continuum optical depth $\tau = 1$. In reality, of course, the photosphere is not a sharp surface, rather there is a gradual transition from  optically thick to  optically thin, and the location of $\tau \approx 1$ can depend on wavelength.} blackbody photosphere of temperature \Tph, which emits a constant intensity
+$I_p = B_\lambda(\Tph)$ in all directions.  The photospheric 
+temperature could be estimated from  Stefan's law $L = 4 \pi \Rph^2 \sigma_{\rm sb} T_p^4$, with $\sigma_{\rm sb}$ the Stefan-Boltzmann constant. For the purposes of this exercise, we take $L$ and \Rph\ as given.\footnote{See my other set of notes {\it Calculating Analytic Light Curves of Supernovae, Kilonovae, and Other Transients: A worksheet} for methods for calculating $L$ and \Rph. Alternatively, these values could be adjusted to fit an observed event.}
+
+\pp {\bf Assumption 2:} We ignore time-dependence and only calculate a "snapshot" of the spectrum at some time $t$ after the explosion. This is often called the {\it stationarity} assumption\footnote{In contrast to the "static" approximation, the stationarity approximation
+takes into account the fact that the ejecta is moving -- this is crucial for considering the Doppler shift effects which set the line profiles.
+Rather, stationary simply assumes that the amount the ejecta moves  or changes is negligible on the timescale of interest.}.
+Since the ejecta is optically thin in the continuum above the photosphere,
+the travel time for a photon to escape the ejecta (at an outer radius $r = r_{\rm max}$) is 
+$t_{ lc} = r_{\rm max}/c =  v_{\rm max} t/c$ which is short compared to the expansion time \texp\ as long as $v_{\rm max} \ll c$.
+
+
+\pp {\bf Assumption 3:} The ejecta is in homologous expansion,
+where the velocity, $v$, at any radius, $r$ is given by $v(r) = r/t$.
+(Actually, the formalism here can be generalized to other velocity laws, although the mathematics becomes somewhat more complicated.)
+%newthought{Supernova or other explosive transients} eject matter at a range of velocities.
+%After some time after the explosions, pressure forces in the ejecta become negligible, and
+%so the matter begins to move in free expansion -- reaching the {\it homologous expansion} phase, \footnote{Or more accurately, \texp\ is the time since homology was established.}.
+
+Expansion of the ejecta has a dramatic effect on line radiation transport. Imagine a photon emitted from the photosphere.
+As the photon propagates through the ejecta, it moves into regions of differing velocities. Hence, its wavelength {\it with respect to the co-moving frame}\footnote{By co-moving frame wavelength
+we mean the wavelength of the photon
+ measured in a frame moving along with ejecta at that particular point.} is constantly Doppler shifting.  If a photon initially has a wavelength $\lambda_{\rm cmf}$ in the local co-moving frame, then after moving some distance $\Delta s$ its new co-moving wavelength $\lambda'_{\rm cmf}$ is given by the standard (non-relativistic) Doppler shift formula
+
+\beq
+\lambda'_{\rm cmf} = \lambda_{\rm cmf} (1 + \Delta v/c)
+\eeq
+where $\Delta v$ is the change in velocity between the points separated by $\Delta s$. In homologous expansion, we have the simple relation\footnote{A homologously  expanding
+medium is essentially a Hubble-like flow, thus every point in the flow looks like it is the center of expansion. Thus, regardless of the direction of the photon, the velocity gradient is
+$dv/ds = t^{-}$. In a non-homologous flow (e.g., a constant velocity wind) the velocity gradient $dv/ds$  depends on the direction the photon moves -- though this is calculable, it 
+complicates the analysis.}
+$\Delta v = \Delta s/t$, so
+the shift in the co-moving frame wavelength $\Delta \lambda_{\rm cmf} = \lambda'_{\rm cmf}  - \lambda_{\rm cmf}$ is
+\beq
+\Delta \lambda_{\rm cmf} = \frac{\lambda_{\rm cmf}}{ct} \Delta s 
+\label{eq:shift}
+\eeq
+In other words, the comoving wavelength redshifts  in {\it direct proportion} to the distance travelled. This is just like the Hubble expansion Universe -- photons continually shift to the red.
+
+
+\pp {\bf Assumption 4:}  We  assume the continuum opacity is zero in the line forming region above the photosphere, and consider the opacity of a single line
+with rest wavelength $\lambda_0$. (We will generalize this to multiple lines below.) 
+
+The generic line cross-section is\footnote{The factor of $\lambda_0^2/c$ in Eq.~\ref{eq:linecs} appears because we have chosen to define the function $\phi_\lambda$ with units of wavelength$^{-1}$. Had we chosen to define the line profile in frequency space, $\phi_\nu(\nu)$ that factor would not be needed.  } 
+\beq
+\sigma_l(\lambda) =  \left( \frac{\pi e^2}{m_e c} \right) f_{\rm osc} \phi_\lambda(\lambda) 
+\left( \frac{\lambda_0^2}{c} \right)
+\label{eq:linecs}
+\eeq
+where $f_{\rm osc}$ is the oscillator strength and $\phi_\lambda$ is the line profile.
+For lines that are intrinsically broadened by thermal Doppler effects, the line profile\footnote{
+The actual intrinsic line profile for thermal Doppler broadening is given by a Gaussian profile
+\[
+\phi_\lambda = \frac{1}{\sqrt{\pi} \Delta \lambda_T} \exp \left[ - \frac{ ( \lambda - \lambda_0)^2}{\Delta \lambda_T^2} \right] 
+\]
+But we will find that the exact line profile shape does not matter and will not worry about this details here.}
+  $\phi_\lambda \approx 1/\Delta \lambda_T$, where 
+the intrinsic thermal line width is $\Delta \lambda_T = \lambda_0 (v_D/c)$, where the thermal velocity $v_D = \sqrt{2 k_B T/m}$.
+
+For a typical ejecta temperature $T \approx 10,000$~K and atom mass $m \approx m_p$ the thermal velocities are $v_T \approx 10~{\rm km~s^{-1}}$.
+This is much less the ejecta expansion velocities $v_{\rm ej} \approx 10,000~{\rm km~s^{-1}}$, which will permit valuable simplification of the radiation transport. 
+
+\pp {\bf Assumption 5:} The atomic level populations can be calculated in local-thermodynamic equilibrium (LTE). To determine
+the optical depth of a line, we need to know the number of atoms in the lower level of the atomic transition of interest, as these are the atoms that  absorb or scatter light\footnote{For example, the $H_\alpha$ transition of hydrogen is one from the first excited ($n=2$) level to the second excited ($n=3$). Thus, we need to know the not just the number density of hydrogen atoms, but the number density of {\it neutral} hydrogen atoms that are in the $n=2$ state.} 
+
+Consider a transition in a species of atomic number $z$, an ionization state $i$, and an excitation state $n$.  In LTE, the number density in the lower level of the transition is
+\beq
+\mathcal{N}_{z,i,n} = \frac{\rho X_z}{m_z} f_{i} 
+\left( \frac{g_n e^{-\Delta E_{n}/kT}}{\sum_j g_j e^{-\Delta E_{j}/kT}} \right)
+\eeq
+where $\rho$ is the density, $X_z$ is the mass fraction of the species, $m_z$ is the atomic mass of this species,  and $f_i$ is the fraction of this atom in the ionization state $i$. The numerator in 
+parenthesis is the Boltzmann factor that depends on the statistical weight, $g_n$, and
+the excitation energy above ground, $\Delta E_n$ of the lower level. The denominator in parenthesis is the partition function, i.e., the sum over all levels in the ion which provides the proper normalization\footnote{For temperatures $T$ lower than the typical excitation energies, most of the atoms
+will be in the ground state, and so as a first approximation the partition function is $g_0$, where $g_0$ is the
+statistical weight of the ground state.}.
+
+\pp {\bf Assumption 6:} We adopt the {\it Sobolev} (or narrow-line limit) approximation.  Consider a line with center wavelength $\lambda_0$ and say a photon in the ejecta has co-moving frame wavelength
+$\lambda_{\rm cmf} < \lambda_0$. As this photon travels through the ejecta it will not feel the opacity of the line {\it until} its co-moving frame wavelength
+has redshifted into {\it resonance} with the line (i.e., until it achieves $\lambda_{\rm cmf} \approx \lambda_0$). From Eq.~\ref{eq:shift}, this occurs when the photon has moved a distance
+\beq
+\Delta s = (\lambda_0 - \lambda_{\rm cmf} ) ct
+\eeq
+Given that the line has some intrinsic width $\Delta \lambda_T$, the redshifting photon will feel the opacity of the line over some spatial region, called the {\it resonance region}, which
+In homologous expansion has a size
+\beq
+\Delta l_{\rm res} = v_t t
+\eeq
+Since the thermal velocity $v_t \ll v_{\rm ej}$, we see that the sizes of the resonance region tiny compared to the entire ejecta cloud. Thus the resonance region can
+be taken to be nearly a point.
+
+The essence of the Sobolev approximation is that the properties of the atmosphere (i.e., its density, temperature, ionization/excitation state) can be taken to be constant in this region.
+Thus, a photon's interactions with a line become a {\it local} event, and we can relatively easily calculate the probability that  photon interacts with the line at this resonance point.
+
+
+\bigskip
+\pp {\it {\LARGE Problems}}
+\bigskip
+
+
+
+\sq{quest}  Consider a photon that passes through a resonance region. What is the probability that
+the photon interacts (i.e., is scattered or absorbed) in this region?  This is given by 
+the  {\it Sobolev optical depth}.
+\addtocounter{subq}{1}
+
+\beq
+\tau_{\rm sob} = \int_{0}^{\Delta l_{\rm res}} \mathcal{N}_{z,i,n} \sigma_l ds
+\eeq
+
+\Q{quest}{subq} Show that the Sobolev optical depth is\footnote{I am neglecting here the 
+correction
+for stimulated emission, which in LTE modifies $\tau_{\rm sob}$ by a factor 
+\beq
+\tau_{\rm sob,se} = \tau_{\rm sob} (1 - e^{-h c/\lambda_0 kT})
+\eeq
+This can be included, though it is a small correction when $h c/\lambda_0 \gg k T$.}
+\beq
+\tau_{\rm sob} = \left( \frac{\pi e^2}{m_e c} \right)  \mathcal{N}_{z,i,n} f_{\rm osc} \lambda_0 t
+\eeq
+\Q{quest}{subq}  Show that  $\tau_{\rm sob}$ of a line is proportional to
+\beq
+\tau_{\rm sob} \propto g_n  f_{\rm osc} \lambda_0 e^{-\Delta E_n/kT}
+\label{eq:tauscale}
+\eeq
+
+\comment The probability  that  a photon interacts with a line within its resonance region (i.e., is scatter or absorbed) is simply
+$1 - e^{-\tau_{\rm sob}}$. Thus the condition $\tau_{\rm sob} > 1$ defines a "strong" line.  The
+scaling of Eq.~\ref{eq:tauscale} provides a useful wave of estimating which are the important
+lines in the spectra of supernova or other transients. The  \link{https://github.com/dnkasen/snlines}{snlines.py} code allows you to list lines of different species, sorted by the strength
+estimated by Eq.~\ref{eq:tauscale}.
+
+
+
+%\Q{quest}{subq} Make the assumption of {\it complete redistribution}, in which the wavelength
+%of a scattered is sampled from the line profile $\phi_\lambda(\lambda)$ and show that the probability that a photon escapes the line after a scatter is
+%\beq
+%\beta = \frac{1 - e^{-\tau_s}}{\tau_s}
+%\eeq
+%Thus, on average, a photon will  scatter roughly $N = 1/\beta$ times in a line before escaping the resonance region.
+%\Q{quest}{subq} Estimate the time a photon spends scattering in the resonance region and compare it to the expansion timescale $t$.  
+%\pp The outcome of the interaction could be a scattering within the line,  a fluorescence to another line transitions, or absorption into the thermal pool. For the low densities of SN ejecta, scattering and fluorescence typically dominate over absorptions.  A photon make
+
+\sq{quest} Consider an intensity ray coming off of the photosphere. Solving the radiation
+transport problem in the case in simple, since since the ejecta properties are assumed to be constant over the resonance region. The intensity after passing through
+a line resonance region is simply
+\beq
+I = I_{\rm ph} e^{-\tau_{\rm sob}(\vec{r})} + S_\lambda(\vec{r}) (1 - e^{-\tau_{\rm sob}(\vec{r})})
+\eeq
+where both $\tau_{\rm sob}$ and the line source function $S_\lambda$ are evaluated at the resonance region point $\vec{r}$, which we will see how to located below.
+The first term above describes attenuation of the photospheric intensity by
+the line optical depth, while the second term describes light emitteds from the line.
+
+ To properly determine the = source function $S_\lambda$ requires a full non-LTE solution
+of the rate equations. However, two approximate methods are useful.
+
+
+\begin{marginfigure}
+\includegraphics[width=2.5in]{dilution_factor.png}
+\caption{Setup for calculating the mean radiation field $J_\lambda(r)$ outside
+a spherical, constant intensity photosphere. It is convenient to locate the point $r$ at
+the origin and put the photosphere above on the $z$-axis. \label{fig:dilution}}
+\end{marginfigure}
+
+
+\pp {\bf Scattering Line:} For a purely scattering line, the line merely redirects the incident radiation field; the source function is  $S_\lambda(r) = J_\lambda(r)$ where $J_\lambda$ averages the intensity coming from all directions.
+\beq
+J_\lambda (\lambda) = \frac{1}{4 \pi} \oint I_{\rm ext}(\lambda, \theta, \phi) d \Omega
+\eeq
+where $d \Omega = \sin \theta d \theta d \phi$. 
+
+\Q{quest}{subq} For the case of a spherical photosphere that emits intensity $I_{\rm ph}$ in all directions (see margin figure) show that the $J_\lambda(r)$ at a point a distance $r$ from the center is 
+\beq
+J_\lambda(r) = W(r) I_{\rm ph}~~{\rm where~} 
+W(r) = \frac{1}{2} \left[1 - \sqrt{1 - \frac{\Rph^2}{r^2}} \right]
+\eeq
+
+\pp The function $W(r)$ is called the {\it dilution factor} (as it describes the geometrical dilution of the radiation field.
+
+\Q{quest}{subq} Take the limits $r = \Rph$ and $r \gg \Rph$ and show that  $J_\lambda(r) = W(r) I_{\rm ph}$ behaves in a reasonable way. 
+
+\pp  {\bf Absorptive line:} For purely absorptive lines, the  source function is equal to the blackbody function at the local temperature $S_\lambda(r) = B_\lambda(T,r)$.  
+
+\begin{marginfigure}
+\includegraphics[width=2.5in]{CDV_blue.png}
+\caption{Schematic figure showing that all resonance regions lying along a plane perpendicular
+to the observer line of sight (the $-z$ direction) map to the same observer
+wavelength. Thus constructing the observed flux at this wavelength requires integrating up
+all of these rays using Eq.~\ref{eq:cases}.}
+\end{marginfigure}
+
+
+\pp To estimate the temperature structure, we  make the assumption
+{\it radiative equilibrium}, in which at each point in the ejecta radiative heating exactly balances radiative cooling. This is written
+\beq
+ \oint \int I_{\rm ph} \kappa \rho ~d \lambda d \Omega 
+= \oint \int B_\lambda(T) \kappa \rho ~d \lambda d \Omega
+\label{eq:rad_eq} 
+\eeq
+ For simplicity, we assume that the incident radiation is solely from
+the photosphere which emits as a blackbody $I_{\rm ph} = B_\lambda(T_{\rm ph})$.
+
+
+
+\Q{quest}{subq} Assume a wavelength-dependent opacity ($\kappa$ indpendent of $\lambda$)
+and solve Eq.~\ref{eq:rad_eq} to determine the temperature $T(r)$ as a function of $T_{\rm ph}$ and
+$r$.
+
+
+\newq{quest}{subq}{Calculate Your Own Supernova Line}
+
+
+
+
+
+
+\newthought{To calculate a synthetic line profile}, we must integrate observer line of sight
+specific intensity over the entire ejecta.
+\begin{marginfigure}
+\includegraphics[width=2.5in]{Pcygni.png}
+\caption{Schematic of line formation in a supernova,\label{fig:pcygni}}
+\end{marginfigure}
+It is conventional to define the observer direction to be along the {\rm negative}-$z$ axis (see Figure~\ref{fig:pcygni}).
+Consider a specific intensity ray with observer frame wavelength $\lambda_{\rm obs}$ directed towards the observer (i.e., parallel to the $z$ axis)
+at coordinates $(x,y)$.  The ray will come in resonance with the line at the $z$ point
+\beq
+z_{\rm res} = \frac{(\lambda_{\rm obs} - \lambda_0)}{\lambda_0} c \texp
+\label{eq:z_res}
+\eeq
+After passing through the ejecta the specific intensity that is observed will be
+
+\beq
+I(x,y,\lambda_{\rm obs}) = 
+\begin{cases}
+ I_p e^{-\tau_s} + S ( 1 - e^{-\tau_s} ) & {\rm for~}   p < \Rph {\rm~and~} r > \Rph\ ~{\rm and~} z < 0 ~ (absorption~region) \\
+ I_p & {\rm for~} p < \Rph {\rm~ and~} z > 0 ~(occluded~region)\\
+ I_p & {\rm for~} r < \Rph  ~(photosphere)\\
+ S ( 1 - e^{-\tau_s} ) & {\rm for~} p > \Rph ~(emission~region)\\
+\end{cases}
+\label{eq:cases}
+\eeq
+where $p$ is the impact parameter $p = \sqrt{x^2 + y^2}$ and  the Sobolev optical depth
+ $\tau_s$ and source function $S_\lambda$ should be evaluated at coordinates $(x,y,z_{\rm res})$, i.e., the location of the resonance region.
+
+
+We generate the spectrum by integrate over the rays pointing towards the observer using either Cartesian ($x,y,z$) or cylindrical polar ($z, p, \phi$) coordinates\footnote{Cylindrical-polar coordinates are more convenient for spherical  geometries, as the ejecta properties are then independent of $\phi$.}
+
+\beq
+L_\lambda(\lambda) = \int \int dx dy~ I(x,y) =  \int \int pdp d\phi~ I(p,\phi)
+\eeq
+The integral can be extended to the outer edge\footnote{Typically one might choose $v_{\rm max}$ to be where the ejecta density has fallen of by a few orders as compared to
+the photospheric density.} of the ejecta at some radius $r_{\rm max} = v_{\rm max} \texp$. 
+
+\Q{quest}{subq} Write a code to generate a synthetic line profile by doing the above integral 
+for each value of $\lambda_{\rm obs}$ you are interested in.
+To start, you can parameterize the optical depth as $\tau(v) = \tau_0 (v/v_{\rm ph})^{-m}$
+and use the pure scattering line source function.
+
+\Q{quest}{subq} With your code, analyze how the line profile changes with different values of $v_{\rm ph}$, $\tau_0$ and the exponent $m$, and  how it is depends on the line source function.
+
+\Q{quest}{subq} When we have more than one line in the spectrum, we can generalize Eq.~\ref{eq:cases} and find that
+
+
+
+\beq
+I(x,y,\lambda_{\rm obs}) = 
+\begin{cases}
+ I_p \exp (- \sum_{i=1}^N \tau_i) + \sum_{i=1}^N S_i ( 1 - e^{-\tau_i} ) 
+ \exp( -\sum_{j=1}^{i-1} \tau_j) & (absorption~region) \\
+ I_p \exp(- \sum_{i=1}^N \tau_i)  & (occluded~region/photosphere)\\
+ \sum_{i=1}^N S_i ( 1 - e^{-\tau_i} ) 
+ \exp( -\sum_{j=1}^{i-1} \tau_j) & (emission~region)\\
+\end{cases}
+\eeq
+where the sum over lines runs from bluer lines to redder lines. The
+ $\tau_{\rm sob}$ of each line is to be evaluated at the proper
+$z_{\rm es}$ given by Eq.~\ref{eq:z_res}. 
+
+\Q{quest}{subq} Calculate a spectrum including two lines with slight different line
+center wavelengths.
+
+\Q{quest}{subq} Grab the data from the {\it kurucz\_cd23\_lines.dat} line list and read in all the lines of a particular species. Using the temperature structure $T(r)$ calculated above, determine the relative strength of each line (using Eq.~\ref{eq:tauscale}) and calculate the full spectrum of 
+that ion.
+
+\comment By adding in even more species, you can  generalize your code to model an entire spectrum. Given an explosion model, you can thus generate its synthetic spectrum and compare to data. Or if you have an observed spectrum, you may prefer to parameterize $\tau_{\rm sob}(\vec{r)}$ and $S(\vec{r})$ and adjust them until you get a good fit. In the past, such approaches have been extremely valuable in analyzing data and validating models.
+
+
+
+
+
+\end{document}
