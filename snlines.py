@@ -4,8 +4,8 @@ import cmd
 import readline
 import optparse
 import numpy as np
-import pylab as py
-import cPickle as pickle
+import matplotlib.pyplot as py
+import pickle
 from collections import deque
 
 #########################################################
@@ -33,7 +33,21 @@ class SNConsole(cmd.Cmd):
     def __init__(self, state = None):
         cmd.Cmd.__init__(self)
         self.prompt = "SN> "
-        self.intro = "Welcome to SNLines"
+
+        self.intro = "\n---------------------------------\n"
+        self.intro += " Welcome to SNLines\n"
+        self.intro += " This code will overplot line locations on a spectrum for ID purposes\n"
+        self.intro += " lines are created in order of estimated optical depth\n"
+        self.intro += "--------------------------------\n"
+        self.intro += " To open with a spectrum, use:\n"
+        self.intro += "    python snlines.py <filename>\n"
+        self.intro += " where <filename> is a file with two column format: wavelength flux\n"
+        self.intro += " (to open a file in nu Fnu format, add the -n flag)\n \n"
+        self.intro += " To show lines of a given a species, type:\n   new Z I \n"
+        self.intro += " where Z is atomic number and 0 is ionization stage, with I=0 in neutral \n"
+        self.intro += " (For example: new 20 1 opens CaII)\n"
+        self.intro += " \n Type ? for more info on commands\n"
+        self.intro += "--------------------------------\n"
 
         # start with a state, or if not, create a blank one
         if state is None:
@@ -287,7 +301,7 @@ class SNConsole(cmd.Cmd):
             print("=== List of Commands ===")
             print("")
 
-            print("n, new      add species")
+            print("n, new      add species, format: new Z I (e.g., new 20 1 adds CaII)")           
             print("c, cycle    cycle the active species")
             print("k, kill     remove active species")
             print("e, species  list all species")
@@ -366,11 +380,22 @@ class Species(object):
         
 class SNLinesState:
 
-    def __init__(self, pklfile = "/Users/kasen/Dropbox/codes/my_python/kurucz.pkl", defaultv = 1e4):
+    def __init__(self, pklfile = None, defaultv = 1e4):
+        
+        # get atomic data file name
+        if pklfile is None:
+            try:
+                base_dir = os.environ["SNLINES_DIR"]
+            except KeyError:
+                print("\nERROR: Environment variable SNLINES_DIR is not set.")
+                print("Set it to the location of the kurucz.pkl file included in the distribution")
+                exit(1)
+            pklfile = os.path.join(base_dir, "kurucz.pkl")
         
         # read in line data, pickled by pickedata.py
         with open(pklfile, 'rb') as f:
-            self.linedict = pickle.load(f)
+            self.linedict = pickle.load(f,encoding='latin1')
+
 
         # empty state
         self.species = {}
@@ -397,14 +422,21 @@ class SNLinesState:
         else:
             return None
 
-    def read_data(self, filename, append = False, rescale = True):
-        """read in the data file"""
+    def read_data(self, filename, freq_units = False,append = False, rescale = True):     
+       
         try:
             ddata  = np.loadtxt(filename) #, unpack = True)
             newxdata = ddata[:,0]
             newydata = ddata[:,1]
+
+            if (freq_units):
+                nu  = newxdata
+                lam = 3e10/nu*1e8
+                Flam = newydata*nu/lam
+                newxdata = lam
+                newydata = Flam
         except IOError:
-            print("*** Unable to read file: {}".format(filename))
+                print("*** Unable to read file: {}".format(filename))
         else:
             if rescale:
                 self.yrange = (0,1.1*max(newydata))
@@ -523,13 +555,13 @@ if __name__ == "__main__":
     parser.add_option("--xr",dest="xrange")
     parser.add_option("--yr",dest="yrange")
     parser.add_option("-v", dest="vel", type="float", default=1e4)
-
+    parser.add_option("-n",dest="frequency_units",default=False, action="store_true")
     # set defaults, if not specified
     (opts, args) = parser.parse_args()
 
     state = SNLinesState(defaultv = opts.vel)
     for arg in args:
-        state.read_data(arg, append = True)
+        state.read_data(arg, freq_units=opts.frequency_units,append = True)
 
     # override defaults with values from command line
     if opts.xrange is not None:
